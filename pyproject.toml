@@ -7,6 +7,7 @@ authors = ["Michael Mezzina <michaelmez39@gmail.com>"]
 [tool.poetry.dependencies]
 python = "~3.10"
 tensorflow = "~2.8.0"
+tensorflow-gpu = "~2.8.0"
 numpy = "^1.22.2"
 pillow = "~9.0.1"
 [tool.poetry.dev-dependencies]
