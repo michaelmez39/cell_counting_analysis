@@ -22,20 +22,21 @@ class CellDataset:
     self.data = ds.map(self.process_path)
     return
 
-  """
-  Turns point label image into density map for training
-  """
   def make_label(self, dots):
-    #resize = tf.constant([1, 600, 600, 1], dtype=tf.int32)
-    #img = tf.reshape(dots, resize)
+    """
+    Turns point label image into density map for training
+    """
+    pad = layers.ZeroPadding2D(padding=(16,16))
     img = tf.cast(dots, tf.float32)
+    img = tf.reshape(img, (1, 600, 600, 1))
+    img = pad(img)
 
     kernel_in = np.ones((32, 32, 1, 1))
     kernel = tf.constant(kernel_in, dtype=tf.float32)
-    img = tf.image.resize_with_pad(img, 632, 632)
-    img = tf.reshape(img, (1, 632, 632, 1))
+    
     img =  tf.nn.conv2d(img, kernel, 1, padding="VALID")
     img = tf.reshape(img, (601, 601, 1))
+
     return img
 
   def process_path(self, paths):
@@ -45,6 +46,12 @@ class CellDataset:
     img_raw = tf.io.read_file(paths[0])
     img = tf.image.decode_png(img_raw, channels=3)
 
+    img = tf.reshape(img, (1, 600, 600, 3))
+    pad = layers.ZeroPadding2D(padding=(16,16))
+    img = pad(img)
+    img = tf.reshape(img, (632, 632, 3))
+
+    img.set_shape([632, 632, 3])
 
     lbl_raw = tf.io.read_file(paths[1])
     lbl = self.make_label(tf.image.decode_png(lbl_raw, channels=1))

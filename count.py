@@ -1,8 +1,26 @@
 import tensorflow as tf
 
+# turn off gpu training
+# import os
+# os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
+
 from tensorflow import keras
 from tensorflow.keras import layers
 from load_data import CellDataset
+
+# gpus = tf.config.list_physical_devices('GPU')
+# if gpus:
+#   try:
+#     # Currently, memory growth needs to be the same across GPUs
+#     for gpu in gpus:
+#       tf.config.experimental.set_memory_growth(gpu, True)
+#     logical_gpus = tf.config.list_logical_devices('GPU')
+#     print(len(gpus), "Physical GPUs,", len(logical_gpus), "Logical GPUs")
+#   except RuntimeError as e:
+#     # Memory growth must be set before GPUs have been initialized
+#     print(e)
+
+
 
 class ConvBlock(keras.Model):
   def __init__(self, filter1, filter3):
@@ -15,29 +33,36 @@ class ConvBlock(keras.Model):
 
   def call(self, inputs, training=False):
     x1 = self.conv1(inputs)
-    x1 = self.bn(x1, training=training)
-    x1 = self.activation(x1)
-
     x2 = self.conv1(inputs)
-    x2 = self.bn(x2, training=training)
-    x2 = self.activation(x2)
-
+    
     x = self.concat([x1, x2])
+    x = self.bn(x, training=training)
+    x = self.activation(x)
+
     return x
 
-# Layer(3, 64, 3, "valid"),
-# FilterBlock(64, 16, 16),
-# FilterBlock(32, 16, 32),
-# Layer(48, 16, 14, "valid"),
-# FilterBlock(16, 112, 48),
-# FilterBlock(160, 40, 40),
-# FilterBlock(80, 32, 96),
-# Layer(128, 16, 17, "valid"),
-# Layer(16, 64, 1, "valid"),
-# Layer(64, 1, 1, "valid")
+diet_model =  keras.Sequential([
+  layers.Rescaling(1./255),
+  layers.Conv2D(32, 3, padding="VALID"),
+  layers.BatchNormalization(),
+  layers.LeakyReLU(),
+  ConvBlock(16, 24),
+  layers.Conv2D(8, 14, padding="VALID"),
+  layers.BatchNormalization(),
+  layers.LeakyReLU(),
+  ConvBlock(8, 12),
+  layers.Conv2D(16, 17, padding="VALID"),
+  layers.BatchNormalization(),
+  layers.LeakyReLU(),
+  ConvBlock(6, 4),
+  layers.Conv2D(8, 1, padding="VALID"),
+  layers.BatchNormalization(),
+  layers.LeakyReLU(),
+  layers.Conv2D(1, 1, padding="VALID"),
+  layers.ReLU(),
+])
 
 model = keras.Sequential([
-  layers.ZeroPadding2D(padding=(16, 16)),
   layers.Rescaling(1./255),
   layers.Conv2D(64, 3, padding="VALID"),
   layers.BatchNormalization(),
@@ -54,24 +79,51 @@ model = keras.Sequential([
   layers.BatchNormalization(),
   layers.LeakyReLU(),
   layers.Conv2D(64, 1, padding="VALID"),
-  layers.BatchNormalization(),
   layers.LeakyReLU(),
   layers.Conv2D(1, 1, padding="VALID"),
-  layers.BatchNormalization(),
-  layers.LeakyReLU(),
+  layers.ReLU(),
 ])
 
-model.compile(
-  optimizer=keras.optimizers.RMSprop(),
-  loss = keras.losses.MeanSquaredError(),
+epochs = 6
+batches = 2
+lr = 1e-7
+
+diet_model.compile(
+  optimizer=keras.optimizers.SGD(learning_rate=lr),
+  loss = keras.losses.MeanAbsoluteError(),
   metrics=[keras.metrics.Accuracy()]
 )
 
-dataset = CellDataset("../Images/MBM")
+dataset = CellDataset("../Images/MBM").data.shuffle(44)
 
-model.fit(
-  dataset.data.batch(1),
-  epochs=2,
+test_dataset = dataset.take(5).batch(1)
+train_dataset = dataset.skip(5).batch(1)
+
+diet_model.fit(
+  train_dataset,
+  epochs=epochs,
+  verbose=1,
+  validation_data=test_dataset
 )
 
-model.save("model0")
+diet_model.save("model1")
+
+# model.compile(
+#   optimizer=keras.optimizers.SGD(learning_rate=lr),
+#   loss = keras.losses.MeanSquaredError(),
+#   metrics=[keras.metrics.Accuracy()]
+# )
+
+# dataset = CellDataset("../Images/MBM").data.shuffle(44)
+
+# test_dataset = dataset.take(5).batch(1)
+# train_dataset = dataset.skip(5).batch(1
+# )
+# model.fit(
+#   train_dataset,
+#   epochs=epochs,
+#   verbose=1,
+#   validation_data=test_dataset
+# )
+
+# model.save("bigmodel")
