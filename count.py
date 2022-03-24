@@ -40,22 +40,42 @@ class ConvBlock(keras.Model):
     x = self.activation(x)
 
     return x
+# diet_model =  keras.Sequential([
+#   layers.Rescaling(1./255),
+#   layers.Conv2D(24, 3, padding="VALID"),
+#   layers.BatchNormalization(),
+#   layers.LeakyReLU(),
+#   ConvBlock(12, 10),
+#   layers.Conv2D(8, 14, padding="VALID"),
+#   layers.BatchNormalization(),
+#   layers.LeakyReLU(),
+#   ConvBlock(8, 12),
+#   layers.Conv2D(12, 17, padding="VALID"),
+#   layers.BatchNormalization(),
+#   layers.LeakyReLU(),
+#   ConvBlock(6, 6),
+#   ConvBlock(3, 4),
+#   layers.Conv2D(8, 1, padding="VALID"),
+#   layers.BatchNormalization(),
+#   layers.LeakyReLU(),
+#   layers.Conv2D(1, 1, padding="VALID"),
+#   layers.ReLU(),
+# ])
 
 diet_model =  keras.Sequential([
   layers.Rescaling(1./255),
-  layers.Conv2D(32, 3, padding="VALID"),
+  layers.Conv2D(64, 3, padding="VALID"),
   layers.BatchNormalization(),
   layers.LeakyReLU(),
-  ConvBlock(16, 24),
-  layers.Conv2D(8, 14, padding="VALID"),
+  ConvBlock(18, 24),
+  layers.Conv2D(32, 14, padding="VALID"),
   layers.BatchNormalization(),
   layers.LeakyReLU(),
-  ConvBlock(8, 12),
-  layers.Conv2D(16, 17, padding="VALID"),
+  layers.Conv2D(24, 17, padding="VALID"),
+  ConvBlock(18, 24),
   layers.BatchNormalization(),
   layers.LeakyReLU(),
-  ConvBlock(6, 4),
-  layers.Conv2D(8, 1, padding="VALID"),
+  layers.Conv2D(16, 1, padding="VALID"),
   layers.BatchNormalization(),
   layers.LeakyReLU(),
   layers.Conv2D(1, 1, padding="VALID"),
@@ -84,13 +104,13 @@ model = keras.Sequential([
   layers.ReLU(),
 ])
 
-epochs = 6
+epochs = 15
 batches = 2
-lr = 1e-7
+lr = 1e-6
 
 diet_model.compile(
-  optimizer=keras.optimizers.SGD(learning_rate=lr),
-  loss = keras.losses.MeanAbsoluteError(),
+  optimizer=keras.optimizers.Adam(learning_rate=lr),
+  loss = keras.losses.MeanSquaredError(),
   metrics=[keras.metrics.Accuracy()]
 )
 
@@ -106,7 +126,7 @@ diet_model.fit(
   validation_data=test_dataset
 )
 
-diet_model.save("model1")
+diet_model.save("model3")
 
 # model.compile(
 #   optimizer=keras.optimizers.SGD(learning_rate=lr),
