@@ -1,5 +1,14 @@
-# Automatic Cell Counting
-Utilities to help count cells in hydrogels
+# Automatic Cell Counting Models
+Machine learning models to count cells in images.
+
+## Files
+`load_data.py` creates a Tensorflow dataset from a set of images, the class CellDataset holds the dataset in the data field. May need be altered for different datasets.
+
+`count.py` holds the tensorflow model and the code to train the model
+
+`viewer.py` this is used to visualize the output of the model in comparison to its input
+
+**To change datasets, count.py and viewer.py will have to be updated with the new path to the dataset and some information like image size and width will need to be changed**
 
 ## Sources
 ### Convolutional Neural Networks

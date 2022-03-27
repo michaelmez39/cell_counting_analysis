@@ -62,27 +62,51 @@ class ConvBlock(keras.Model):
 #   layers.ReLU(),
 # ])
 
-diet_model =  keras.Sequential([
-  layers.Rescaling(1./255),
-  layers.Conv2D(64, 3, padding="VALID"),
-  layers.BatchNormalization(),
-  layers.LeakyReLU(),
-  ConvBlock(18, 24),
-  layers.Conv2D(32, 14, padding="VALID"),
-  layers.BatchNormalization(),
-  layers.LeakyReLU(),
-  layers.Conv2D(24, 17, padding="VALID"),
-  ConvBlock(18, 24),
-  layers.BatchNormalization(),
-  layers.LeakyReLU(),
-  layers.Conv2D(16, 1, padding="VALID"),
-  layers.BatchNormalization(),
-  layers.LeakyReLU(),
-  layers.Conv2D(1, 1, padding="VALID"),
-  layers.ReLU(),
-])
+# diet_model =  keras.Sequential([
+#   layers.Rescaling(1./255),
+#   layers.Conv2D(64, 3, padding="VALID"),
+#   layers.BatchNormalization(),
+#   layers.LeakyReLU(),
+#   ConvBlock(18, 24),
+#   layers.Conv2D(32, 14, padding="VALID"),
+#   layers.BatchNormalization(),
+#   layers.LeakyReLU(),
+#   layers.Conv2D(24, 17, padding="VALID"),
+#   ConvBlock(18, 24),
+#   layers.BatchNormalization(),
+#   layers.LeakyReLU(),
+#   layers.Conv2D(16, 1, padding="VALID"),
+#   layers.BatchNormalization(),
+#   layers.LeakyReLU(),
+#   layers.Conv2D(1, 1, padding="VALID"),
+#   layers.ReLU(),
+# ])
 
-model = keras.Sequential([
+# diet_model =  keras.Sequential([
+#   layers.Rescaling(1./255),
+#   layers.Conv2D(16, 3, padding="VALID"),
+#   layers.BatchNormalization(),
+#   layers.LeakyReLU(),
+  
+#   ConvBlock(12, 14),
+
+#   layers.Conv2D(16, 12, padding="VALID"),
+#   layers.BatchNormalization(),
+#   layers.LeakyReLU(),
+
+#   layers.Conv2D(24, 17, padding="VALID"),
+#   layers.BatchNormalization(),
+#   layers.LeakyReLU(),
+
+#   ConvBlock(18, 24),
+#   layers.Conv2D(1, 64, padding="VALID"),
+#   layers.BatchNormalization(),
+#   layers.LeakyReLU(),
+#   layers.Conv2D(1, 1, padding="VALID"),
+#   layers.ReLU(),
+# ])
+
+diet_model = keras.Sequential([
   layers.Rescaling(1./255),
   layers.Conv2D(64, 3, padding="VALID"),
   layers.BatchNormalization(),
@@ -104,46 +128,29 @@ model = keras.Sequential([
   layers.ReLU(),
 ])
 
-epochs = 15
-batches = 2
-lr = 1e-6
+epochs = 100
+batches = 1
+lr = 5e-3
+number_val = 12
+
+es = keras.callbacks.EarlyStopping(monitor='val_loss', patience=3)
 
 diet_model.compile(
   optimizer=keras.optimizers.Adam(learning_rate=lr),
   loss = keras.losses.MeanSquaredError(),
-  metrics=[keras.metrics.Accuracy()]
+  metrics=[keras.metrics.Accuracy()],
 )
 
-dataset = CellDataset("../Images/MBM").data.shuffle(44)
-
-test_dataset = dataset.take(5).batch(1)
-train_dataset = dataset.skip(5).batch(1)
+dataset = CellDataset("../Images/adipocyte_data").data.shuffle(40)
+test_dataset = dataset.take(number_val).batch(batches)
+train_dataset = dataset.skip(number_val).batch(batches)
 
 diet_model.fit(
   train_dataset,
   epochs=epochs,
   verbose=1,
-  validation_data=test_dataset
+  validation_data=test_dataset,
+  # callbacks=[es]
 )
 
 diet_model.save("model3")
-
-# model.compile(
-#   optimizer=keras.optimizers.SGD(learning_rate=lr),
-#   loss = keras.losses.MeanSquaredError(),
-#   metrics=[keras.metrics.Accuracy()]
-# )
-
-# dataset = CellDataset("../Images/MBM").data.shuffle(44)
-
-# test_dataset = dataset.take(5).batch(1)
-# train_dataset = dataset.skip(5).batch(1
-# )
-# model.fit(
-#   train_dataset,
-#   epochs=epochs,
-#   verbose=1,
-#   validation_data=test_dataset
-# )
-
-# model.save("bigmodel")
