@@ -1,3 +1,11 @@
 *.jpg
 __pycache__
 Images/*
+data/y_test.npy
+data/x_train.npy
+data/x_raw.npy
+data/x_test.npy
+data/x_val.npy
+data/y_raw.npy
+data/y_train.npy
+data/y_val.npy
