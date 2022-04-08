@@ -1,78 +1,31 @@
-import tensorflow as tf
+import cv2
 import numpy as np
-import pathlib
+import os
 
-from tensorflow import keras
-from tensorflow.keras import layers
-from tensorflow.data import Dataset
-from PIL import Image
-img_height = 150
-img_width = 150
-data_dir = "../Images/MBM"
-batch_size = 32
+def load_data():
+    notation_path = '../mbm_data/labels'
+    image_path = '../mbm_data/image'
+    notations = []
+    images = []
 
+    dot_list = os.listdir(notation_path)
+    image_list = os.listdir(image_path)
 
-class CellDataset:
-  def __init__(self, path):
-    self.root_dir = pathlib.Path(path)
-    self.images = self.root_dir/"images"
-    self.labels = self.root_dir/"labels"
-    l = [(str(i), str(l)) for i, l in zip(self.images.iterdir(), self.labels.iterdir())]
-    ds = Dataset.from_tensor_slices(l)
-    self.data = ds.map(self.process_path)
-    return
+    for entry in dot_list:
+        img = cv2.imread(os.path.join(notation_path, entry))
+        # Insert any image preprocessing here!
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        img = np.float32(img)
+        img = img[..., np.newaxis]
+        
+        
+        notations.append(img)
 
-  def make_label(self, dots):
-    """
-    Turns point label image into density map for training
-    """
-    pad = layers.ZeroPadding2D(padding=(16,16))
-    img = tf.cast(dots, tf.float32)
-    img = tf.reshape(img, (1, img_width, img_height, 1))
-    img = pad(img)
+    for entry in image_list:
+        img = cv2.imread(os.path.join(image_path, entry))
 
-    kernel_in = np.ones((32, 32, 1, 1))
-    kernel = tf.constant(kernel_in, dtype=tf.float32)
-    
-    img =  tf.nn.conv2d(img, kernel, 1, padding="VALID")
-    img = tf.reshape(img, (img_width+1, img_height+1, 1))
+        # Insert any image preprocessing here! TODO
 
-    return img
+        images.append(img)
 
-  def process_path(self, paths):
-    # resize1 = tf.constant([1, 600, 600, 3])
-    # resize2 = tf.constant([1, 601, 601, 1])
-    image_channels = 3
-    img_raw = tf.io.read_file(paths[0])
-    img = tf.image.decode_jpeg(img_raw, channels=image_channels)
-    img = tf.reshape(img, (1, img_width, img_height, image_channels))
-    pad_amt = 16
-    pad = layers.ZeroPadding2D(padding=(pad_amt,pad_amt))
-    img = pad(img)
-    img = tf.reshape(img, (img_width+pad_amt*2, img_height+pad_amt*2,image_channels))
-    img.set_shape([img_width+pad_amt*2, img_height+pad_amt*2, image_channels])
-    
-    lbl_raw = tf.io.read_file(paths[1])
-    lbl = tf.image.decode_png(lbl_raw, channels=1)
-    lbl = tf.dtypes.cast(lbl, dtype=tf.float32)
-    #lbl = tf.image.rgb_to_grayscale(lbl)
-    lbl = self.make_label(lbl) / 255.0
-    lbl.set_shape([img_width+1,img_height+1,1])
-    return img, lbl
-
-
-def main():
-  ds = CellDataset(data_dir)
-
-  il = ds.data.take(1)
-
-  for img, lbl in il:
-    Image.fromarray(img.numpy()).show()
-    resize = tf.constant([600, 600])
-    lbl = tf.cast(lbl * 20, tf.uint8)
-    lbl = tf.reshape(lbl, resize).numpy()
-    Image.fromarray(lbl, mode="L").show()
-
-if __name__ == "main":
-  main()
-
+    return np.array(images), np.array(notations)

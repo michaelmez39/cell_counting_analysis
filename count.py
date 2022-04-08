@@ -141,7 +141,7 @@ diet_model.compile(
   metrics=[keras.metrics.Accuracy()],
 )
 
-dataset = CellDataset("../Images/adipocyte_data").data.shuffle(40)
+dataset = CellDataset("../data/adipocyte_data").data.shuffle(40)
 test_dataset = dataset.take(number_val).batch(batches)
 train_dataset = dataset.skip(number_val).batch(batches)
 
