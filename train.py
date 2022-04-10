@@ -50,7 +50,7 @@ def main(debug = False, model_name = 'countception_model'):
 
     model = countception()
     shape = x_test.shape
-    model.build(input_shape=shape)\
+    model.build(input_shape=shape)
     
     if debug:
         print('Model Summary:')
